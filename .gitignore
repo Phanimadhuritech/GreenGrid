@@ -40,3 +40,8 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+/API_DOCUMENTATION.md
+/DEPLOYMENT.md
+/PROJECT_PRESENTATION.md
+/README.md
+/RESUME_PROJECT_DESCRIPTION.md
