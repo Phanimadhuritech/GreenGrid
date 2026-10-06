@@ -4,7 +4,7 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const connectDB = require("./src/config/db");
-const authRoutes = require("./src/routes/authRoutes");  
+const authRoutes = require("./src/routes/authRoutes");
 const testRoutes = require("./src/routes/testRoutes");
 const organizationRoutes = require("./src/routes/organizationRoutes");
 const buildingRoutes = require("./src/routes/buildingRoutes");
@@ -51,12 +51,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Test route
-app.get("/api", (req, res) => {
+app.get("/", (req, res) => {
   res.json({
     message: "GreenGrid API is running 🚀"
   });
 });
-
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/test", testRoutes);
@@ -92,5 +91,4 @@ const startServer = async () => {
     console.error("Failed to start server:", error.message);
   }
 };
-
 startServer();
