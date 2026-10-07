@@ -335,7 +335,8 @@ export default function Dashboard() {
   // 2. FACILITY MANAGER DASHBOARD
   // =========================================================================
   if (user?.role === "FACILITY_MANAGER") {
-    const org = data?.organization || {};
+    const org = data?.organization;
+    const isUnassigned = data?.unassigned || !org;
     const ov = data?.overview || {};
     const bBreakdown = data?.buildingBreakdown || [];
 
@@ -345,15 +346,48 @@ export default function Dashboard() {
           <div style={commonStyles.titleGroup}>
             <h1 style={commonStyles.pageTitle}>Facility Management Dashboard</h1>
             <p style={commonStyles.pageSubtitle}>
-              Operations overview for <strong>{org.name || "Assigned Organization"}</strong>.
+              Operations overview for <strong>{org?.name || "Assigned Facility Workspace"}</strong>.
             </p>
           </div>
           <div style={commonStyles.headerActions}>
-            <Link to="/invoices" style={commonStyles.primaryBtn}>
-              Generate Invoices
+            <Link to="/buildings" style={commonStyles.primaryBtn}>
+              + Manage Buildings
             </Link>
           </div>
         </div>
+
+        {isUnassigned && (
+          <div
+            style={{
+              padding: "16px 20px",
+              backgroundColor: "#EFF6FF",
+              border: "1px solid #BFDBFE",
+              borderRadius: "10px",
+              color: "#1E40AF",
+              marginBottom: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
+          >
+            <div>
+              <strong>ℹ️ Facility Workspace Setup:</strong> You are not currently linked to a specific organization.
+              Add a building or select your organization to start managing facility infrastructure.
+            </div>
+            <Link
+              to="/buildings"
+              style={{
+                ...commonStyles.primaryBtn,
+                padding: "8px 16px",
+                fontSize: "13px",
+              }}
+            >
+              Add First Building →
+            </Link>
+          </div>
+        )}
 
         {/* Manager KPIs */}
         <div

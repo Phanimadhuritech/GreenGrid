@@ -172,6 +172,9 @@ const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        organization: user.organization || null,
+        unit: user.unit || null,
+        phone: user.phone || "",
       },
     });
   } catch (error) {

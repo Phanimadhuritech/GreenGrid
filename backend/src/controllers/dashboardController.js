@@ -183,11 +183,37 @@ const getAdminDashboard = async (req, res) => {
 const getManagerDashboard = async (req, res) => {
   try {
     if (!req.user.organization) {
-      return res.status(400).json({ message: "Facility Manager is not assigned to an organization" });
+      return res.status(200).json({
+        organization: null,
+        unassigned: true,
+        message: "Facility Manager is not assigned to an organization yet",
+        overview: {
+          buildingsCount: 0,
+          unitsCount: 0,
+          metersTotal: 0,
+          activeMetersCount: 0,
+          totalEnergyConsumption: 0,
+          totalRevenue: 0,
+          pendingInvoicesCount: 0,
+          pendingInvoicesAmount: 0,
+        },
+        maintenanceSummary: {
+          total: 0,
+          open: 0,
+          assigned: 0,
+          inProgress: 0,
+          resolved: 0,
+          closed: 0,
+          urgent: 0,
+        },
+        buildingBreakdown: [],
+        recentMaintenance: [],
+        recentInvoices: [],
+      });
     }
 
     const orgId = req.user.organization?._id || req.user.organization;
-    const organization = await Organization.findById(orgId).select("name code status");
+    const organization = await Organization.findById(orgId).select("name code status address contactEmail contactPhone");
 
     const buildings = await Building.find({ organization: orgId });
     const buildingIds = buildings.map((b) => b._id);

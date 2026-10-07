@@ -14,6 +14,9 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.user || null);
     } catch (error) {
       // Cleanly handle 401 when user is not authenticated
+      try {
+        localStorage.removeItem("greengrid_token");
+      } catch (_) {}
       setUser(null);
     } finally {
       setLoading(false);
@@ -29,6 +32,12 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
     });
+
+    if (response.data?.token) {
+      try {
+        localStorage.setItem("greengrid_token", response.data.token);
+      } catch (_) {}
+    }
 
     if (response.data?.user) {
       setUser(response.data.user);
@@ -52,6 +61,9 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      try {
+        localStorage.removeItem("greengrid_token");
+      } catch (_) {}
       setUser(null);
     }
   };

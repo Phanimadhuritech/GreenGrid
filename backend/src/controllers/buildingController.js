@@ -22,7 +22,8 @@ const getBuildings = async (req, res) => {
 
     // FACILITY_MANAGER isolation if assigned to an organization
     if (req.user.role === "FACILITY_MANAGER" && req.user.organization) {
-      filter.organization = req.user.organization;
+      const userOrgId = req.user.organization?._id || req.user.organization;
+      filter.organization = userOrgId;
     }
 
     const buildings = await Building.find(filter)
@@ -93,8 +94,13 @@ const getBuildingById = async (req, res) => {
 // @access  Private (PLATFORM_ADMIN, FACILITY_MANAGER)
 const createBuilding = async (req, res) => {
   try {
-    const { organization, name, code, address, numberOfFloors, status } =
+    let { organization, name, code, address, numberOfFloors, status } =
       req.body;
+
+    // If organization not in body, default to user's assigned organization
+    if (!organization && req.user.organization) {
+      organization = req.user.organization?._id || req.user.organization;
+    }
 
     if (!organization || !name || !code) {
       return res.status(400).json({
@@ -125,6 +131,12 @@ const createBuilding = async (req, res) => {
       return res.status(403).json({
         message: "You are not authorized to create buildings for this organization",
       });
+    }
+
+    // If FACILITY_MANAGER is unassigned, auto-assign this organization to their profile
+    if (req.user.role === "FACILITY_MANAGER" && !req.user.organization) {
+      req.user.organization = organization;
+      await req.user.save();
     }
 
     // Check duplicate building code within organization

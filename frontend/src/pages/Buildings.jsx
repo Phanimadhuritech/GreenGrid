@@ -5,7 +5,7 @@ import AppLayout from "../components/AppLayout";
 import { commonStyles } from "../theme";
 
 export default function Buildings() {
-  const { user } = useAuth();
+  const { user, getCurrentUser } = useAuth();
   const [buildings, setBuildings] = useState([]);
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrgFilter, setSelectedOrgFilter] = useState("");
@@ -56,9 +56,7 @@ export default function Buildings() {
   useEffect(() => {
     if (user) {
       if (canManage) {
-        if (user.role === "PLATFORM_ADMIN") {
-          fetchOrganizations();
-        }
+        fetchOrganizations();
         fetchBuildings(selectedOrgFilter);
       } else {
         setLoading(false);
@@ -68,8 +66,10 @@ export default function Buildings() {
 
   const openCreateModal = () => {
     setEditingBuilding(null);
+    const userOrgId = user?.organization?._id || (typeof user?.organization === "string" ? user?.organization : "");
+    const defaultOrg = selectedOrgFilter || userOrgId || (organizations.length > 0 ? organizations[0]._id : "");
     setFormData({
-      organization: selectedOrgFilter || (organizations[0]?._id || user?.organization?._id || user?.organization || ""),
+      organization: defaultOrg,
       name: "",
       code: "",
       address: "",
@@ -112,6 +112,14 @@ export default function Buildings() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const userOrgId = user?.organization?._id || (typeof user?.organization === "string" ? user?.organization : "");
+    const orgToSubmit = formData.organization || userOrgId || selectedOrgFilter || (organizations.length > 0 ? organizations[0]._id : "");
+
+    if (!orgToSubmit) {
+      setError("Please select or assign an organization for this building.");
+      return;
+    }
+
     if (!formData.name.trim()) {
       setError("Building name is required");
       return;
@@ -121,21 +129,29 @@ export default function Buildings() {
       return;
     }
 
+    const payload = {
+      ...formData,
+      organization: orgToSubmit,
+    };
+
     try {
       setSubmitting(true);
       setError("");
       setSuccess("");
 
       if (editingBuilding) {
-        const res = await API.put(`/buildings/${editingBuilding._id}`, formData);
+        const res = await API.put(`/buildings/${editingBuilding._id}`, payload);
         setSuccess(`Building "${res.data.building.name}" updated successfully.`);
       } else {
-        const res = await API.post("/buildings", formData);
+        const res = await API.post("/buildings", payload);
         setSuccess(`Building "${res.data.building.name}" created successfully.`);
       }
 
       closeModal();
       fetchBuildings(selectedOrgFilter);
+      if (getCurrentUser) {
+        getCurrentUser();
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save building");
     } finally {
@@ -451,7 +467,8 @@ export default function Buildings() {
             </div>
 
             <form onSubmit={handleSubmit}>
-              {user?.role === "PLATFORM_ADMIN" && (
+              {/* Organization Selection / Display */}
+              {user?.role === "PLATFORM_ADMIN" ? (
                 <div style={commonStyles.formGroup}>
                   <label style={commonStyles.label}>Organization *</label>
                   <select
@@ -462,6 +479,43 @@ export default function Buildings() {
                     style={commonStyles.input}
                   >
                     <option value="">Select Organization</option>
+                    {organizations.map((org) => (
+                      <option key={org._id} value={org._id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : user?.organization ? (
+                <div style={commonStyles.formGroup}>
+                  <label style={commonStyles.label}>Organization</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={
+                      typeof user.organization === "object"
+                        ? user.organization.name || "Assigned Organization"
+                        : organizations.find((o) => o._id === user.organization)?.name || "Assigned Organization"
+                    }
+                    style={{
+                      ...commonStyles.input,
+                      backgroundColor: "#F8FAF9",
+                      color: "#475569",
+                      cursor: "not-allowed",
+                    }}
+                  />
+                </div>
+              ) : (
+                <div style={commonStyles.formGroup}>
+                  <label style={commonStyles.label}>Organization *</label>
+                  <select
+                    name="organization"
+                    value={formData.organization}
+                    onChange={handleInputChange}
+                    required
+                    style={commonStyles.input}
+                  >
+                    <option value="">Select Organization for Facility</option>
                     {organizations.map((org) => (
                       <option key={org._id} value={org._id}>
                         {org.name}
